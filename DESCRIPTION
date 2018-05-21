@@ -7,3 +7,5 @@ License: What license it uses
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
+URL: https://github.com/goldingn/jobstatus
+BugReports: https://github.com/goldingn/jobstatus/issues
