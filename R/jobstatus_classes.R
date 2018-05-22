@@ -6,9 +6,9 @@ rhash <- function(n = 20) {
 # R6 class for storing and transferring job status information
 
 #' @importFrom R6 R6Class
-status <- R6::R6Class(
+jobstatus_node <- R6::R6Class(
 
-  classname = "status",
+  classname = "jobstatus_node",
 
   private = list(
 
@@ -37,7 +37,8 @@ status <- R6::R6Class(
         rhash()
     },
 
-    status_changed = FALSE
+    status_changed = FALSE,
+
     fire_status_changed = function() {
       # TODO: Fire event handlers in the order they were added
       for (name in ls(private$callbacks_status_changed)) {
@@ -101,7 +102,6 @@ status <- R6::R6Class(
 
     }
 
-
   ),
 
   public = list(
@@ -123,27 +123,36 @@ status <- R6::R6Class(
 
     },
 
-    # (if this is a terminal jobstatus object) set the current status and write
-    # it
-    set_status = function (progress, ...) {
-
-      if (private$has_children()) {
-        stop ("cannot set the status as there are sub-jobs",
-              call. = FALSE)
-      }
-
-      # TODO: Handle ... arguments
-
-      new_status <- list(progress = progress)
-
-      # <update the status info>
-      private$check_status(new_status, terminal = TRUE)
-      private$write_status()
-      private$fire_status_changed()
-
+    on_status_changed = function(callback) {
+      id <- as.character(private$nextCallbackId)
+      private$nextCallbackId <- private$nextCallbackId + 1L
+      private$callbacks_status_changed[[id]] <- callback
+      # Return a no-arg function that can be called to unregister the callback
+      invisible(function() {
+        rm(list = id, pos = private$callbacks_status_changed)
+      })
     },
 
-    # Retrieve status from children
+    # a print method for this object
+    print = function () {
+      print("a jobstatus object with current status:")
+      print(self$status)
+    }
+
+  )
+)
+
+# jobstatus nodes that aren't terminal just accumulate status information from
+# their children
+intermediate_jobstatus_node <- R6::R6Class(
+
+  classname = "intermediate_jobstatus_node",
+
+  inherit = "jobstatus_node",
+
+  public = list(
+
+    # fetch status information from the children
     fetch_status = function () {
 
       if (!private$has_children()) {
@@ -159,39 +168,17 @@ status <- R6::R6Class(
       if (private$status_changed)
         private$fire_status_changed()
 
-    },
-
-    on_status_changed = function(callback) {
-      id <- as.character(private$nextCallbackId)
-      private$nextCallbackId <- private$nextCallbackId + 1L
-      private$callbacks_status_changed[[id]] <- callback
-      # Return a no-arg function that can be called to unregister the callback
-      invisible(function() {
-        rm(list = id, pos = private$callbacks_status_changed)
-      })
-    },
-
-    tick = function () {
-
-      # TODO
-    },
-
-    # a print method for this object
-    print = function () {
-      print("a jobstatus object with current status:")
-      print(self$status)
     }
 
   )
 )
 
 #' @export
-#' @importFrom R6 R6Class
-jobstatus <- R6::R6Class(
+terminal_jobstatus_node <- R6::R6Class(
 
-  classname = "jobstatus",
+  classname = "terminal_jobstatus_node",
 
-  inherit = "status",
+  inherit = "jobstatus_node",
 
   public = list(
 
@@ -217,8 +204,7 @@ jobstatus <- R6::R6Class(
 
     },
 
-    # (if this is a terminal jobstatus object) set the current status and write
-    # it
+    # set the current progress and any other information and write
     set_status = function (progress, ...) {
 
       if (private$has_children()) {
@@ -232,29 +218,11 @@ jobstatus <- R6::R6Class(
 
     },
 
-    # fetch status information from the children
-    fetch_status = function () {
-
-      if (!private$has_children()) {
-        stop ("cannot fetch the status as there are no sub-jobs",
-              call. = FALSE)
-      }
-
-      new_status <- private$read_status()
-      private$check_status(new_status)
-      self$status <- new_status
-      private$write_status()
-
-    },
-
+    # utility function to increment the progress only
     tick = function () {
-
-    },
-
-    # a print method for this object
-    print = function () {
-      print("a jobstatus object with current status:")
-      print(self$status)
+      progress <- self$status$progress[[1]]
+      progress <- progress + 1
+      self$status$progress[[1]] <- progress
     }
 
   )
