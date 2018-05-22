@@ -53,7 +53,7 @@ jobstatus_node <- R6::R6Class(
     # write the status to file IFF there is a parent jobstatus object
     write_status = function () {
 
-      if (has_parent()) {
+      if (private$has_parent()) {
         # <to do>
 
         f <- file(private$write_file, open = "w")
@@ -156,7 +156,7 @@ intermediate_jobstatus_node <- R6::R6Class(
 
   classname = "intermediate_jobstatus_node",
 
-  inherit = "jobstatus_node",
+  inherit = jobstatus_node,
 
   public = list(
 
@@ -186,7 +186,7 @@ terminal_jobstatus_node <- R6::R6Class(
 
   classname = "terminal_jobstatus_node",
 
-  inherit = "jobstatus_node",
+  inherit = jobstatus_node,
 
   public = list(
 
@@ -220,9 +220,21 @@ terminal_jobstatus_node <- R6::R6Class(
               call. = FALSE)
       }
 
+      # Merge old status and new args
+      new_status <- self$status
+      if (!missing(progress))
+        new_status$progress <- progress
+      other_args <- list(...)
+      for (arg_name in other_args) {
+        new_status[[arg_name]] <- other_args
+      }
+
       # <update the status info>
       private$check_status(new_status, terminal = TRUE)
+      self$status <- new_status
       private$write_status()
+
+      private$fire_status_changed()
 
     },
 
