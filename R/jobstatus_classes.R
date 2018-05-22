@@ -255,7 +255,7 @@ terminal_jobstatus_node <- R6::R6Class(
 
       super$initialize(super_job)
       self$maximum_progress <- maximum_progress
-      status <- private$default_progress()
+      status <- private$default_status()
       status$max <- maximum_progress
 
       other_args <- list(...)
@@ -279,7 +279,7 @@ terminal_jobstatus_node <- R6::R6Class(
       # Merge old status and new args
       new_status <- self$status
       if (!missing(progress))
-        new_status$progress <- progress
+        new_status$progress <- list(progress)
       other_args <- list(...)
 
       names <- names(other_args)

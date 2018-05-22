@@ -10,11 +10,12 @@ describe("jobstatus", {
     fake_status <- function (...) {
       status <- list(...)
       attr(status, "job_terminated") <- FALSE
+      # attr(status, "jobstatus_filename") <- "blah"
       status
     }
 
     with_jobstatus({
-      job <- terminal_jobstatus_node$new()
+      job <- jobstatus$new()
 
       value <- job$status
       times_called <- 0L
@@ -24,11 +25,11 @@ describe("jobstatus", {
         times_called <<- times_called + 1L
       })
 
-      expect_identical(value, list(progress = 0))
+      expect_identical(value, fake_status(progress = list(0), max = 100L))
 
       job$set_status(10)
 
-      expected <- fake_status(progress = 10)
+      expected <- fake_status(progress = list(10), max = 100L)
       expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
@@ -40,7 +41,7 @@ describe("jobstatus", {
       })
 
       job$set_status(20)
-      expected <- fake_status(progress = 20)
+      expected <- fake_status(progress = list(20), max = 100L)
       expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
