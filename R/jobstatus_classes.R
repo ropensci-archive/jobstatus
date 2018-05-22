@@ -48,6 +48,8 @@ jobstatus_node <- R6::R6Class(
       if (private$has_parent()) {
         # <to do>
 
+        attr (self$progress, "jobstatus_filename") <- get (JOBSTATUS_FILE_NAME)
+
         f <- file(private$write_file, open = "w")
         x <- serialize(self, f)
         close (f)
