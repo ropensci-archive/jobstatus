@@ -7,10 +7,10 @@ describe("jobstatus", {
       to
     }
 
-    fake_status <- function (...) {
+    fake_status <- function (..., object) {
       status <- list(...)
       attr(status, "job_terminated") <- FALSE
-      # attr(status, "jobstatus_filename") <- "blah"
+      attr(status, "jobstatus_filename") <- object$.__enclos_env__$private$write_file
       status
     }
 
@@ -18,18 +18,19 @@ describe("jobstatus", {
       job <- jobstatus$new()
 
       value <- job$status
+
       times_called <- 0L
 
       reg_handle <- job$on_status_changed(function(status) {
         value <<- status
         times_called <<- times_called + 1L
       })
-
-      expect_identical(value, fake_status(progress = list(0), max = 100L))
+      expected <- fake_status(progress = list(0), max = 100L, object = job)
+      expect_identical(value, expected)
 
       job$set_status(10)
 
-      expected <- fake_status(progress = list(10), max = 100L)
+      expected <- fake_status(progress = list(10), max = 100L, object = job)
       expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
@@ -41,7 +42,7 @@ describe("jobstatus", {
       })
 
       job$set_status(20)
-      expected <- fake_status(progress = list(20), max = 100L)
+      expected <- fake_status(progress = list(20), max = 100L, object = job)
       expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
