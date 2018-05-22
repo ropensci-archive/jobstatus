@@ -1,7 +1,7 @@
 Package: jobstatus
 Version: 0.0.0.9000
 Title: Send Status, Progress and Other Information Between Functions and Processes
-Description: TBD
+Description: jobstatus lets you pass live progress, status, and other information between functions and processes in R, so that you can keep an eye on how complex and long-running jobs are progressing. jobstatus uses the future package so you can even get live progress information back from jobs running in parallel.
 Authors@R: person("First", "Last", , "first.last@example.com", c("aut", "cre"))
 License: What license it uses
 Encoding: UTF-8
