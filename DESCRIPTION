@@ -10,4 +10,5 @@ ByteCompile: true
 URL: https://github.com/goldingn/jobstatus
 BugReports: https://github.com/goldingn/jobstatus/issues
 Imports: R6
+Suggests: future
 RoxygenNote: 6.0.1
