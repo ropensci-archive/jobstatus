@@ -8,6 +8,7 @@ jobstatus_node <- R6::R6Class(
   private = list(
 
     callbacks_status_changed = new.env(parent = emptyenv()),
+
     nextCallbackId = 1L,
 
     # the file to write progress information to when sending status information
@@ -16,15 +17,6 @@ jobstatus_node <- R6::R6Class(
 
     # a list of files containing progress information from down the tree
     read_files = list(),
-
-    # create a child jobstatus object and register it
-    create_sub_jobstatus = function () {
-
-      filename <- private$generate_filename()
-      private$read_files <- c(private$read_files, filename)
-      filename
-
-    },
 
     # generate a file for passing status information
     generate_filename = function (...) {
@@ -87,7 +79,9 @@ jobstatus_node <- R6::R6Class(
             })
           }
         })
+
       prog <- list(progress = vals)
+
       private$status_changed = !identical (vals, self$status$progress)
       private$status$progress <- prog
 
@@ -160,6 +154,15 @@ intermediate_jobstatus_node <- R6::R6Class(
   inherit = jobstatus_node,
 
   public = list(
+
+    # create a child jobstatus object and register it
+    create_sub_jobstatus = function () {
+
+      filename <- private$generate_filename()
+      private$read_files <- c(private$read_files, filename)
+      filename
+
+    },
 
     # fetch status information from the children
     fetch_status = function () {
