@@ -2,8 +2,8 @@
 # environment
 get_current_job <- function () {
 
-  if (exists(".current_job_file")){
-    current_job <- .current_job_file
+  if (exists(JOBSTATUS_VARNAME)){
+    current_job <- get(JOBSTATUS_VARNAME, envir = .GlobalEnv)
   } else {
     current_job <- NULL
   }

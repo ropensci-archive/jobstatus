@@ -1,9 +1,9 @@
 # R6 class for storing and transferring job status information
 
 #' @importFrom R6 R6Class
-jobstatus <- R6::R6Class(
+status <- R6::R6Class(
 
-  classname = "jobstatus",
+  classname = "status",
 
   private = list(
 
@@ -26,6 +26,7 @@ jobstatus <- R6::R6Class(
 
     },
 
+    # generate a file for passing status information
     generate_filename = function (...) {
       tempfile(...)
     },
@@ -36,59 +37,120 @@ jobstatus <- R6::R6Class(
         # TODO: Error handling, maybe
         private$callbacks_status_changed[[name]](self$status)
       }
+    },
+
+    has_children = function () {
+      !identical(private$read_files, list())
+    },
+
+    has_parent = function () {
+      !is.null(private$write_file)
+    },
+
+    # write the status to file IFF there is a parent jobstatus object
+    write_status = function () {
+
+      if (has_parent()) {
+        # <to do>
+
+        f <- file(private$write_file, open = "w")
+        x <- serialize(self, f)
+        close (f)
+
+      }
+
+    },
+
+    # read the status information from children
+    read_status = function () {
+
+      self$status$value <- sum (unlist (lapply (private$read_files,
+                                                function (i) {
+                                                  f <- file (i, open = "r")
+                                                  ret <- unserialize (f)$status$value
+                                                  close (f)
+                                                  return (ret)
+                                                })))
+
+      f <- file(private$write_file, open = "w")
+      x <- serialize(private, f)
+      close (f)
+      x
+
+    },
+
+    # validation of status inputs.
+    check_status = function (status, terminal = FALSE) {
+
+      # if this is a terminal node (e.g. for set_status), there should be no
+      # nested list structure
+      if (terminal) {
+
+      } else {
+        lapply(status, private$check_status, terminal = FALSE)
+      }
+
     }
+
 
   ),
 
   public = list(
 
     # the status of this job
-    status = list(),
+    status = NULL,
 
-    # the initialisation function (called with jobstatus$new()) which takes the
-    # maximum number of iterations fo the job, and optionally a parent jobstatus
-    # object. By default, get_current_job() tries to automagically detect a
-    # parent jobstatus object.
-    initialize = function (maximum_progress = NULL,
-                           super_job = get_current_job()) {
+    # the initialisation function (called with jobstatus$new()) which takes at
+    # minimum the maximum number of iterations of the job (if a terminal
+    # jobstatus object), and optionally a filename to write status information
+    # to a parent jobstatus object. By default, get_current_job() tries to
+    # automagically detect a parent jobstatus object, so that isn't necessary.
+    initialize = function (super_job = get_current_job()) {
 
+      # do something with super_job
 
+      # record where to write the status information
       private$write_file <- super_job
-
 
     },
 
+    # (if this is a terminal jobstatus object) set the current status and write
+    # it
     set_status = function (value, ...) {
+
+      if (private$has_children()) {
+        stop ("cannot set the status as there are sub-jobs",
+              call. = FALSE)
+      }
+
       # TODO: Handle ... arguments
 
-      # TODO: Merge with existing keys
-      self$status <- list(value = value)
-      f <- file(private$write_file, open = "w")
-      x <- serialize(private, f)
-      close (f)
+      new_status <- list(value = value)
 
-
+      # <update the status info>
+      private$check_status(new_status, terminal = TRUE)
+      private$write_status()
       private$fire_status_changed()
+
     },
 
     # Retrieve status from children
     fetch_status = function () {
-      self$status$value <- sum (unlist (lapply (private$read_files,
-                                                function (i) {
-                      f <- file (i, open = "r")
-                      ret <- unserialize (f)$status$value
-                      close (f)
-                      return (ret)
-                         })))
 
-      f <- file(private$write_file, open = "w")
-      x <- serialize(private, f)
-      close (f)
+      if (!private$has_children()) {
+        stop ("cannot fetch the status as there are no sub-jobs",
+              call. = FALSE)
+      }
+
+      new_status <- private$read_status()
+      private$check_status(new_status)
+      self$status <- new_status
+      private$write_status()
 
       # TODO: Only fire status changed if actually changed
       private$fire_status_changed()
-    },
 
+    },
 
     on_status_changed = function(callback) {
       id <- as.character(private$nextCallbackId)
@@ -98,6 +160,92 @@ jobstatus <- R6::R6Class(
       invisible(function() {
         rm(list = id, pos = private$callbacks_status_changed)
       })
+    },
+
+    tick = function () {
+
+      # TODO
+    },
+
+    # a print method for this object
+    print = function () {
+      print("a jobstatus object with current status:")
+      print(self$status)
+    }
+
+  )
+)
+
+#' @export
+#' @importFrom R6 R6Class
+jobstatus <- R6::R6Class(
+
+  classname = "jobstatus",
+
+  inherit = "status",
+
+  public = list(
+
+    maximum_progress = NULL,
+
+    # the initialisation function (called with jobstatus$new()) which takes at
+    # minimum the maximum number of iterations of the job (if a terminal
+    # jobstatus object), and optionally a filename to write status information
+    # to a parent jobstatus object. By default, get_current_job() tries to
+    # automagically detect a parent jobstatus object, so that isn't necessary.
+    initialize = function (maximum_progress = 100L,
+                           ...,
+                           super_job = get_current_job()) {
+
+      super$initialize(super_job)
+      self$maximum_progress <- maximum_progress
+      self$status <- list(progress = 0, ...)
+
+      # how to make public member (self$status) immutable?
+
+      # record where to write the status information
+      private$write_file <- super_job
+
+    },
+
+    # (if this is a terminal jobstatus object) set the current status and write
+    # it
+    set_status = function (progress, ...) {
+
+      if (private$has_children()) {
+        stop ("cannot set the status as there are sub-jobs",
+              call. = FALSE)
+      }
+
+      # <update the status info>
+      private$check_status(new_status, terminal = TRUE)
+      private$write_status()
+
+    },
+
+    # fetch status information from the children
+    fetch_status = function () {
+
+      if (!private$has_children()) {
+        stop ("cannot fetch the status as there are no sub-jobs",
+              call. = FALSE)
+      }
+
+      new_status <- private$read_status()
+      private$check_status(new_status)
+      self$status <- new_status
+      private$write_status()
+
+    },
+
+    tick = function () {
+
+    },
+
+    # a print method for this object
+    print = function () {
+      print("a jobstatus object with current status:")
+      print(self$status)
     }
 
   )
