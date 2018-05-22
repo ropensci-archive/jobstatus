@@ -11,6 +11,8 @@ jobstatus_node <- R6::R6Class(
 
     nextCallbackId = 1L,
 
+    terminated = FALSE,
+
     # the file to write progress information to when sending status information
     # up the tree
     write_file = NULL,
@@ -49,6 +51,7 @@ jobstatus_node <- R6::R6Class(
         # <to do>
 
         attr (self$status, "jobstatus_filename") <- get (JOBSTATUS_FILE_NAME)
+        attr (self$status, "job_terminated") <- private$terminated
 
         f <- file(private$write_file, open = "w")
         x <- serialize(self, f)
@@ -112,7 +115,9 @@ jobstatus_node <- R6::R6Class(
   public = list(
 
     # the status of this job
-    status = NULL,
+    status = structure(list(),
+                       job_terminated = FALSE,
+                       jobstatus_filename = ""),
 
     # the initialisation function (called with jobstatus$new()) which takes at
     # minimum the maximum number of iterations of the job (if a terminal
@@ -155,6 +160,23 @@ intermediate_jobstatus_node <- R6::R6Class(
 
   inherit = jobstatus_node,
 
+  private = list(
+    # if all the children have terminated, label this as terminated and return
+    check_termination = function () {
+      children_terminated <- vapply(self$status,
+                                    attr,
+                                    "job_terminated",
+                                    FUN.VALUE = FALSE)
+      if (all(childrenterminated)) {
+        private$terminated <- TRUE
+      }
+
+      status
+
+    }
+
+  ),
+
   public = list(
 
     # create a child jobstatus object and register it
@@ -177,6 +199,7 @@ intermediate_jobstatus_node <- R6::R6Class(
       new_status <- private$read_status()
       private$check_status(new_status)
       self$status <- new_status
+      private$check_termination()
       private$write_status()
 
       if (private$status_changed)
@@ -250,6 +273,10 @@ terminal_jobstatus_node <- R6::R6Class(
       progress <- self$status$progress[[1]]
       progress <- progress + 1
       self$status$progress[[1]] <- progress
+    },
+
+    finish = function () {
+      private$terminated = TRUE
     }
 
   )
