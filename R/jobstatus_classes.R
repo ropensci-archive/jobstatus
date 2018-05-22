@@ -186,8 +186,10 @@ intermediate_jobstatus_node <- R6::R6Class(
     # if all the children have terminated, label this as terminated and return
     check_termination = function () {
       children_terminated <- vapply(self$status,
-                                    attr,
-                                    "job_terminated",
+                                    function(x) {
+                                      jt <- attr(x, "job_terminated", exact = TRUE)
+                                      !is.null(jt) && jt
+                                    },
                                     FUN.VALUE = FALSE)
       if (all(children_terminated)) {
         private$terminated <- TRUE
@@ -220,9 +222,8 @@ intermediate_jobstatus_node <- R6::R6Class(
               call. = FALSE)
       }
 
-      new_status <- private$read_status()
-      private$check_status(new_status)
-      self$status <- new_status
+      private$read_status()
+      # private$check_status(new_status)
       private$check_termination()
       private$write_status()
 
@@ -300,7 +301,7 @@ terminal_jobstatus_node <- R6::R6Class(
     tick = function () {
       progress <- self$status$progress[[1]]
       progress <- progress + 1
-      self$status$progress[[1]] <- progress
+      self$set_status(progress = progress)
     },
 
     finish = function () {
