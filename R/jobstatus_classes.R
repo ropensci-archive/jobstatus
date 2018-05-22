@@ -67,13 +67,26 @@ jobstatus_node <- R6::R6Class(
     # read the status information from children
     read_status = function () {
 
-      vals <- lapply (private$read_files,
-                      function (i) {
-                          f <- file (i, open = "r")
-                          ret <- unserialize (f)$status$progress
-                          close (f)
-                          return (ret)
-                                            })
+      vals <- lapply(private$read_files,
+        function (i) {
+          sleep_times <- c(0.01, 0.1, 0.2)
+          # Try this up to 3 times
+          for (i in seq_len(length(sleep_times) + 1L)) {
+            tryCatch({
+              f <- file (i, open = "r")
+              ret <- unserialize (f)$status$progress
+              close (f)
+              return (ret)
+            }, error = function(e) {
+              if (i <= length(sleep_times)) {
+                Sys.sleep(sleep_times[[i]])
+              } else {
+                # Give up
+                stop(e)
+              }
+            })
+          }
+        })
       private$status_changed = !identical (vals, self$status$progress)
       private$status$progress <- vals
 
