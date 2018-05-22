@@ -4,7 +4,7 @@
 \alias{with_jobstatus}
 \title{with_jobstatus}
 \usage{
-with_jobstatus(expr, display = jobstatus_bar())
+with_jobstatus(expr, display = NULL)
 }
 \arguments{
 \item{expr}{an expression to execute}
