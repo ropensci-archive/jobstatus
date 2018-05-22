@@ -47,6 +47,13 @@ jobstatus_node <- R6::R6Class(
       !is.null(private$write_file)
     },
 
+    default_status = function () {
+      status <- list(progress = list(0))
+      attr (status, "jobstatus_filename") <- private$write_file
+      attr (status, "job_terminated") <- FALSE
+      status
+    },
+
     # write the status to file IFF there is a parent jobstatus object
     write_status = function () {
 
@@ -73,7 +80,7 @@ jobstatus_node <- R6::R6Class(
           for (i in seq_len(length(sleep_times) + 1L)) {
             tryCatch({
               if (!file.exists(filename))
-                return(list())
+                return (private$default_status())
               f <- file (filename, open = "r")
               ret <- unserialize (f)$status$progress
               close (f)
