@@ -155,8 +155,10 @@ jobstatus_node <- R6::R6Class(
 
     # a print method for this object
     print = function () {
-      cat("a jobstatus object with current status:")
-      print(self$status)
+      cat("a jobstatus object with current status:\n")
+      status <- self$status
+      attributes(status) <- NULL
+      print(status)
     }
 
   )
