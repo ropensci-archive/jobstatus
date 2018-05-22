@@ -20,8 +20,8 @@ jobstatus_node <- R6::R6Class(
 
     # generate a file for passing status information
     generate_filename = function (...) {
-        #file.path(file_dir, rhash ()) 3 TODO: add file_dir to class
-        rhash()
+        file.path (dirname (get (JOBSTATUS_FILE_NAME, envir = .GlobalEnv)),
+                   rhash ())
     },
 
     status_changed = FALSE,
