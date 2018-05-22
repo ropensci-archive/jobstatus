@@ -1,5 +1,5 @@
 
-[![Travis build status](https://travis-ci.org/ropenscilabs/jobstatus.svg?branch=master)](https://travis-ci.org/ropenscilabs/jobstatus)
+[![Travis build status](https://travis-ci.org/ropenscilabs/jobstatus.svg?branch=master)](https://travis-ci.org/ropenscilabs/jobstatus) [![Coverage status](https://codecov.io/gh/ropenscilabs/jobstatus/branch/master/graph/badge.svg)](https://codecov.io/github/ropenscilabs/jobstatus?branch=master)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 jobstatus
