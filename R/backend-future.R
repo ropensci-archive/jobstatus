@@ -8,6 +8,12 @@ JOBSTATUS_FILE_NAME <- ".current_jobstatus_file"
 
 # make subjobfuture pass the new filename instead
 
+
+#' subjob_future
+#'
+#' a drop-in replacement for \code{\link[future:future]{future::future}} that passes on job status
+#' information
+#'
 #' @export
 subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   globals = TRUE, packages = NULL, lazy = FALSE, seed = NULL,
@@ -49,12 +55,14 @@ pump_events <- function() {
 }
 
 #' @export
+#' @rdname subjob_future
 resolved.Subjob.Future <- function(x, timeout = 0.2, ...) {
   pump_events()
   NextMethod()
 }
 
 #' @export
+#' @rdname subjob_future
 result.Subjob.Future <- function(future, ...) {
   while (!resolved(future, timeout = 0)) {
     Sys.sleep(0.1)

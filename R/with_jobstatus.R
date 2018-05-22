@@ -6,8 +6,12 @@
 
 #' with_jobstatus
 #'
-#' run an expression with some jobs, transmitting and possibly displaying status information
-#' from jobstatus objects in the jobs
+#' run an expression with some jobs, transmitting and possibly displaying status
+#' information from jobstatus objects in the jobs
+#'
+#' @param expr an expression to execute
+#' @param display a function to read status information and display the progress
+#'   information
 #'
 #' @export
 with_jobstatus <- function (expr, display = jobstatus_bar()) {
@@ -25,6 +29,9 @@ with_jobstatus <- function (expr, display = jobstatus_bar()) {
   if (!is.null(display) && is.null(old_js)) {
     on.exit(clear_progress_display(display))
     # register the display callback with it
+
+    # possibly suppress this when deeper in the stack, by only executing if the
+    # node has no parents (in ons_status_changed)
     js$on_status_changed(function(status) {
       update_progress_display(display, status)
     })

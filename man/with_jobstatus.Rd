@@ -6,7 +6,13 @@
 \usage{
 with_jobstatus(expr, display = jobstatus_bar())
 }
+\arguments{
+\item{expr}{an expression to execute}
+
+\item{display}{a function to read status information and display the progress
+information}
+}
 \description{
-run an expression with some jobs, transmitting and possibly displaying status information
-from jobstatus objects in the jobs
+run an expression with some jobs, transmitting and possibly displaying status
+information from jobstatus objects in the jobs
 }
