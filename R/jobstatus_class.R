@@ -63,21 +63,32 @@ jobstatus <- R6::R6Class(
 
       # TODO: Merge with existing keys
       self$status <- list(value = value)
+      f <- file(private$write_file, open = "w")
+      x <- serialize(private, f)
+      close (f)
+
 
       private$fire_status_changed()
     },
 
     # Retrieve status from children
     fetch_status = function () {
-      # TODO: implement
+      self$status$value <- sum (unlist (lapply (private$read_files,
+                                                function (i) {
+                      f <- file (i, open = "r")
+                      ret <- unserialize (f)$status$value
+                      close (f)
+                      return (ret)
+                         })))
+
+      f <- file(private$write_file, open = "w")
+      x <- serialize(private, f)
+      close (f)
 
       # TODO: Only fire status changed if actually changed
       private$fire_status_changed()
     },
 
-    send_status = function () {
-
-    },
 
     on_status_changed = function(callback) {
       id <- as.character(private$nextCallbackId)
