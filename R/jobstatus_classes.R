@@ -33,10 +33,9 @@ jobstatus_node <- R6::R6Class(
 
     fire_status_changed = function() {
       # TODO: Fire event handlers in the order they were added
-      flipped_status <- invert(self$status)
       for (name in ls(private$callbacks_status_changed)) {
         # TODO: Error handling, maybe
-        private$callbacks_status_changed[[name]](flipped_status)
+        private$callbacks_status_changed[[name]](self$status)
       }
     },
 
