@@ -1,8 +1,3 @@
-# Cheap hash name generator
-rhash <- function(n = 20) {
-    paste (c ("jst", sample(c (LETTERS, letters, 0:9), n, TRUE)), collapse = "")
-}
-
 # R6 class for storing and transferring job status information
 
 #' @importFrom R6 R6Class
