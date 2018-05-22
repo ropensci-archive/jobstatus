@@ -230,8 +230,10 @@ terminal_jobstatus_node <- R6::R6Class(
       if (!missing(progress))
         new_status$progress <- progress
       other_args <- list(...)
-      for (arg_name in other_args) {
-        new_status[[arg_name]] <- other_args
+
+      names <- names(other_args)
+      for (arg_num in seq_along(other_args)) {
+        new_status[[names[arg_num]]] <- other_args[[arg_num]]
       }
 
       # <update the status info>
