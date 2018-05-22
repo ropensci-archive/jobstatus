@@ -7,6 +7,9 @@ jobstatus <- R6::R6Class(
 
   private = list(
 
+    callbacks_status_changed = new.env(parent = emptyenv()),
+    nextCallbackId = 1L,
+
     # the file to write progress information to when sending status information
     # up the tree
     write_file = NULL,
@@ -25,6 +28,14 @@ jobstatus <- R6::R6Class(
 
     generate_filename = function (...) {
       tempfile(...)
+    },
+
+    fire_status_changed = function() {
+      # TODO: Fire event handlers in the order they were added
+      for (name in ls(private$callbacks_status_changed)) {
+        # TODO: Error handling, maybe
+        private$callbacks_status_changed[[name]](self$status)
+      }
     }
 
   ),
@@ -47,16 +58,35 @@ jobstatus <- R6::R6Class(
 
     },
 
-    set_status = function () {
+    set_status = function (value, ...) {
+      # TODO: Handle ... arguments
 
+      # TODO: Merge with existing keys
+      self$status <- list(value = value)
+
+      private$fire_status_changed()
     },
 
+    # Retrieve status from children
     fetch_status = function () {
+      # TODO: implement
 
+      # TODO: Only fire status changed if actually changed
+      private$fire_status_changed()
     },
 
     send_status = function () {
 
+    },
+
+    on_status_changed = function(callback) {
+      id <- as.character(private$nextCallbackId)
+      private$nextCallbackId <- private$nextCallbackId + 1L
+      private$callbacks_status_changed[[id]] <- callback
+      # Return a no-arg function that can be called to unregister the callback
+      invisible(function() {
+        rm(list = id, pos = private$callbacks_status_changed)
+      })
     }
 
   )
