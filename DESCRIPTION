@@ -1,6 +1,6 @@
 Package: jobstatus
 Version: 0.0.0.9000
-Title: Send Status, Progress and Other Information Between Functions and Processes
+Title: Send Live Status, Progress and Other Information Between Functions and Processes
 Description: jobstatus lets you pass live progress, status, and other information between functions and processes in R, so that you can keep an eye on how complex and long-running jobs are progressing. jobstatus uses the future package so you can even get live progress information back from jobs running in parallel.
 Authors@R: c(person("Nick", "Golding", email = "nick.golding.research@gmail.com", role = c("aut", "cre")), person("Mark", "Padgham", email = "mark.padgham@email.com", role = "aut"), person("Joe", "Cheng", email = "joe@rstudio.com", role = "aut"))
 License: MIT + file LICENSE
