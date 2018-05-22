@@ -1,14 +1,14 @@
 Package: jobstatus
 Version: 0.0.0.9000
-Title: Send Job Information Between Functions and Processes
+Title: Send Status, Progress and Other Information Between Functions and Processes
 Description: TBD
 Authors@R: person("First", "Last", , "first.last@example.com", c("aut", "cre"))
 License: What license it uses
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
-URL: https://github.com/goldingn/jobstatus
-BugReports: https://github.com/goldingn/jobstatus/issues
+URL: https://github.com/ropenscilabs/jobstatus
+BugReports: https://github.com/ropenscilabs/jobstatus/issues
 Imports: R6
 Suggests: 
     future,
