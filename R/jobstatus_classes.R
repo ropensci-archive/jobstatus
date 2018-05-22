@@ -48,7 +48,8 @@ jobstatus_node <- R6::R6Class(
     },
 
     default_status = function () {
-      status <- list(progress = list(0))
+      status <- list(progress = list(0),
+                     max = 10)
       attr (status, "jobstatus_filename") <- private$write_file
       attr (status, "job_terminated") <- FALSE
       status
@@ -254,9 +255,17 @@ terminal_jobstatus_node <- R6::R6Class(
 
       super$initialize(super_job)
       self$maximum_progress <- maximum_progress
-      self$status <- list(progress = 0, ...)
+      status <- private$default_progress()
+      status$max <- maximum_progress
 
-      # how to make public member (self$status) immutable?
+      other_args <- list(...)
+      names <- names(other_args)
+      for (arg_num in seq_along(other_args)) {
+        status[[names[arg_num]]] <- other_args[[arg_num]]
+      }
+
+      self$status <- status
+
     },
 
     # set the current progress and any other information and write
