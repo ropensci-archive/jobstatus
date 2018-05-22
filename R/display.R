@@ -31,7 +31,7 @@ update_progress_display.progress_bar <- function(x, status) {
 clear_progress_display.progress_bar <- function(x) {
 }
 
-
+#' @export
 rstudio_progress <- R6Class(
   "rstudio_progress",
   private = list(
@@ -77,7 +77,7 @@ rstudio_progress <- R6Class(
 
 #' @export
 update_progress_display.rstudio_progress <- function(x, status) {
-  rollup <- function(x) { sum(unlist(p)) }
+  rollup <- function(x) { sum(unlist(x)) }
 
   ids <- names(status$progress)
   prog <- vapply(status$progress, rollup, numeric(1))

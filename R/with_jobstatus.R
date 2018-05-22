@@ -33,6 +33,7 @@ with_jobstatus <- function (expr, display = NULL) {
     # possibly suppress this when deeper in the stack, by only executing if the
     # node has no parents (in ons_status_changed)
     js$on_status_changed(function(status) {
+      message("on_status_changed called")
       update_progress_display(display, status)
     })
   }

@@ -51,7 +51,8 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
 }
 
 pump_events <- function() {
-  # TODO
+  node <- get_current_job()
+  node$fetch_status()
 }
 
 #' @export
