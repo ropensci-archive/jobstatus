@@ -14,7 +14,7 @@
 #'   information
 #'
 #' @export
-with_jobstatus <- function (expr, display = jobstatus_bar()) {
+with_jobstatus <- function (expr, display = NULL) {
 
   # create an intermediate jobstatus object, using the current filename,
   # if there is one
