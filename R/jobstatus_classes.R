@@ -87,8 +87,9 @@ jobstatus_node <- R6::R6Class(
             })
           }
         })
+      prog <- list(progress = vals)
       private$status_changed = !identical (vals, self$status$progress)
-      private$status$progress <- vals
+      private$status$progress <- prog
 
       f <- file(private$write_file, open = "w")
       x <- serialize(private, f)
