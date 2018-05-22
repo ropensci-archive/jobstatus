@@ -64,7 +64,7 @@ jobstatus_node <- R6::R6Class(
         attr (self$status, "job_terminated") <- private$terminated
 
         f <- file(private$write_file, open = "w")
-        x <- serialize(self, f)
+        x <- serialize(self$status, f)
         close (f)
 
       }
@@ -83,7 +83,7 @@ jobstatus_node <- R6::R6Class(
               if (!file.exists(filename))
                 return (private$default_status())
               f <- file (filename, open = "r")
-              ret <- unserialize (f)$status$progress
+              ret <- unserialize (f)$status
               close (f)
               return (ret)
             }, error = function(e) {
@@ -102,11 +102,11 @@ jobstatus_node <- R6::R6Class(
       private$status_changed = !identical (vals, self$status$progress)
       self$status$progress <- prog
 
-      if (private$has_parent()) {
-        f <- file(private$write_file, open = "w")
-        x <- serialize(private, f)
-        close (f)
-      }
+      # if (private$has_parent()) {
+      #   f <- file(private$write_file, open = "w")
+      #   x <- serialize(private, f)
+      #   close (f)
+      # }
 
       invisible()
     },
