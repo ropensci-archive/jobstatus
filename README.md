@@ -24,7 +24,7 @@ A `jobstatus` set up might look something like this:
 library (jobstatus)
 
 # a function to run a single task
-some_big_task <- function (iterations = 100) {
+some_big_task <- function (iterations = 10) {
   
   # create a jobstatus object to track progress
   # do the work, incrementing the progress counter each time
@@ -46,14 +46,14 @@ some_big_task <- function (iterations = 100) {
 
 # load the future package and set it to run the jobs in parallel
 library (future)
-plan(multiprocess)
+plan(sequential)
 
 # dispatch some jobs, tracking their status information and displaying multiple progress bars
 with_jobstatus({
   
   # create some futures (possibly in parallel)
-  f1 <- subjob_future(some_big_task(100))
-  f2 <- subjob_future(some_big_task(30))
+  f1 <- subjob_future(some_big_task(10))
+  f2 <- subjob_future(some_big_task(5))
   
   # get their values
   v1 <- value(f1)
