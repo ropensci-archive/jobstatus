@@ -1,17 +1,35 @@
-JOBSTATUS_VARNAME = ".current_jobstatus"
+# a jobstatus_node object that might be assigned to the global environment, and
+# rperesents the current job
+JOBSTATUS_NODE_NAME <- ".current_jobstatus_node"
+
+# filepath that might be assigned to the global environment saying where the
+# current jobstatus node should write status information to
+JOBSTATUS_FILE_NAME <- ".current_jobstatus_file"
+
+# make subjobfuture pass the new filename instead
 
 #' @export
 subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   globals = TRUE, packages = NULL, lazy = FALSE, seed = NULL,
   evaluator = plan("next"), ...) {
 
-  if (!exists(JOBSTATUS_VARNAME, .GlobalEnv)) {
-    .GlobalEnv[[JOBSTATUS_VARNAME]] <- NULL
+  if (!exists(JOBSTATUS_NODE_NAME, .GlobalEnv)) {
+    .GlobalEnv[[JOBSTATUS_NODE_NAME]] <- NULL
   }
 
   expr <- substitute(expr)
 
-  globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_VARNAME)
+  # on.exit with global environment
+  js <- get(JOBSTATUS_NODE_NAME)
+  subjob_file_name <- js$create_sub_jobstatus()
+
+  # to pass the file name on to the subjob, temporarily set the current file to
+  # be this subjob's one
+  old_file_name <- get(JOBSTATUS_FILE_NAME, .GlobalEnv)
+  assign(JOBSTATUS_FILE_NAME, subjob_file_name, envir = .GlobalEnv)
+  on.exit(assign(JOBSTATUS_FILE_NAME, old_file_name))
+
+  globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_FILE_NAME)
   packages <- unique(c(packages, "jobstatus"))
 
   f <- future::future(expr, envir = envir, substitute = FALSE, globals = globals,
