@@ -12,21 +12,24 @@
 #' @export
 with_jobstatus <- function (expr, display = jobstatus_bar()) {
 
-  if (exists(JOBSTATUS_NODE_NAME)) {
-    stop ("with_jobstatus can only be called once per job",
-          call. = FALSE)
-  }
-
-  # create an intermediate jobstatus object, using the current filename
+  # create an intermediate jobstatus object, using the current filename,
+  # if there is one
   js <- intermediate_jobstatus_node$new()
 
-  # register the display callback with it
-  js$on_status_changed(display)
+  # temporarily put the jobstatus in the global environment, to be
+  # used by subjob future
+  old_js <- .GlobalEnv[[JOBSTATUS_NODE_NAME]]
+  .GlobalEnv[[JOBSTATUS_NODE_NAME]] <- js
+  on.exit(.GlobalEnv[[JOBSTATUS_NODE_NAME]] <- old_js, add = TRUE)
 
-  # put the jobstatus in the global environment, to be used by subjob future
-  assign(JOBSTATUS_NODE_NAME, js, envir = .GlobalEnv)
+  if (!is.null(display) && is.null(old_js)) {
+    on.exit(clear_progress_display(display))
+    # register the display callback with it
+    js$on_status_changed(function(status) {
+      update_progress_display(display, status)
+    })
+  }
 
   # execute the code and return the value of the expression
-  eval(expr, parent.frame())
-
+  with_current_job(js, expr)
 }

@@ -20,14 +20,19 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   expr <- substitute(expr)
 
   # on.exit with global environment
-  js <- get(JOBSTATUS_NODE_NAME)
+  js <- get_current_job()
+  if (is.null(js)) {
+    stop("Can't call subjob_future from outside of a with_jobstatus block")
+  }
   subjob_file_name <- js$create_sub_jobstatus()
 
   # to pass the file name on to the subjob, temporarily set the current file to
   # be this subjob's one
-  old_file_name <- get(JOBSTATUS_FILE_NAME, .GlobalEnv)
   assign(JOBSTATUS_FILE_NAME, subjob_file_name, envir = .GlobalEnv)
-  on.exit(assign(JOBSTATUS_FILE_NAME, old_file_name))
+  on.exit({
+    if (exists(JOBSTATUS_FILE_NAME, .GlobalEnv))
+      rm(list = JOBSTATUS_FILE_NAME, pos = .GlobalEnv)
+  }, add = TRUE)
 
   globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_FILE_NAME)
   packages <- unique(c(packages, "jobstatus"))
@@ -67,7 +72,7 @@ enhance_globals <- function(expr, envir, globals, packages, extra_globals) {
       if (debug) mdebug("Finding globals ...")
 
       #      expr <- do.call(call, args = c(list("FUN"), list(...)))
-      gp <- getGlobalsAndPackages(expr, envir = envir, tweak = future:::tweakExpression, globals = TRUE)
+      gp <- future::getGlobalsAndPackages(expr, envir = envir, tweak = future:::tweakExpression, globals = TRUE)
       globals <- gp$globals
       packages <- unique(c(packages, gp$packages))
       gp <- NULL

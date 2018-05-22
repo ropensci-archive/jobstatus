@@ -20,8 +20,11 @@ jobstatus_node <- R6::R6Class(
 
     # generate a file for passing status information
     generate_filename = function (...) {
-        file.path (dirname (get (JOBSTATUS_FILE_NAME, envir = .GlobalEnv)),
-                   rhash ())
+      if (!is.null(.GlobalEnv[[JOBSTATUS_FILE_NAME]])) {
+        file.path(dirname(.GlobalEnv[[JOBSTATUS_FILE_NAME]]), rhash())
+      } else {
+        file.path(getOption("jobstatus.basedir", tempdir()), rhash())
+      }
     },
 
     status_changed = FALSE,
@@ -48,7 +51,7 @@ jobstatus_node <- R6::R6Class(
       if (private$has_parent()) {
         # <to do>
 
-        attr (self$status, "jobstatus_filename") <- get (JOBSTATUS_FILE_NAME)
+        attr (self$status, "jobstatus_filename") <- private$write_file
 
         f <- file(private$write_file, open = "w")
         x <- serialize(self, f)
@@ -121,10 +124,17 @@ jobstatus_node <- R6::R6Class(
     # automagically detect a parent jobstatus object, so that isn't necessary.
     initialize = function (super_job = get_current_job()) {
 
-      # do something with super_job
-
       # record where to write the status information
-      private$write_file <- super_job
+      if (is.character(super_job)) {
+        # This is a special case for when with_jobstatus is called inside
+        # a new subjob_future; we know exactly what file we want to write
+        # to.
+        private$write_file <- super_job
+      } else if (is.null(super_job)) {
+        private$write_file <- NULL
+      } else {
+        private$write_file <- super_job$create_sub_jobstatus()
+      }
 
     },
 
@@ -156,6 +166,9 @@ intermediate_jobstatus_node <- R6::R6Class(
   inherit = jobstatus_node,
 
   public = list(
+    initialize = function(super_job = get_current_job()) {
+      super$initialize(super_job = super_job)
+    },
 
     # create a child jobstatus object and register it
     create_sub_jobstatus = function () {
@@ -211,10 +224,6 @@ terminal_jobstatus_node <- R6::R6Class(
       self$status <- list(progress = 0, ...)
 
       # how to make public member (self$status) immutable?
-
-      # record where to write the status information
-      private$write_file <- super_job
-
     },
 
     # set the current progress and any other information and write
