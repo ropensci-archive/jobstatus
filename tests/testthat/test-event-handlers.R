@@ -2,13 +2,13 @@ context("test-event-handlers.R")
 
 describe("jobstatus", {
   it("event handlers work", {
-
-    file <- file.path(tempdir(), "Hello")
-    .GlobalEnv[[JOBSTATUS_FILE_NAME]] <- file
+    copy_filename <- function(from, to) {
+      attr(to, "jobstatus_filename") <- attr(from, "jobstatus_filename", exact = TRUE)
+      to
+    }
 
     fake_status <- function (...) {
       status <- list(...)
-      attr(status, "jobstatus_filename") <- file
       attr(status, "job_terminated") <- FALSE
       status
     }
@@ -29,6 +29,7 @@ describe("jobstatus", {
       job$set_status(10)
 
       expected <- fake_status(progress = 10)
+      expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
       expect_identical(times_called, 1L)
@@ -40,6 +41,7 @@ describe("jobstatus", {
 
       job$set_status(20)
       expected <- fake_status(progress = 20)
+      expected <- copy_filename(value, expected)
 
       expect_equal(value, expected)
       expect_identical(times_called, 2L)
@@ -54,6 +56,6 @@ describe("jobstatus", {
       expect_identical(times_called, 2L)
       # but this one should have
       expect_identical(other_times_called, 2L)
-    }, NULL)
+    }, display = NULL)
   })
 })
