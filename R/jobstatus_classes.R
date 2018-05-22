@@ -33,9 +33,10 @@ jobstatus_node <- R6::R6Class(
 
     fire_status_changed = function() {
       # TODO: Fire event handlers in the order they were added
+      flipped_status <- invert(self$status)
       for (name in ls(private$callbacks_status_changed)) {
         # TODO: Error handling, maybe
-        private$callbacks_status_changed[[name]](self$status)
+        private$callbacks_status_changed[[name]](flipped_status)
       }
     },
 
@@ -48,10 +49,12 @@ jobstatus_node <- R6::R6Class(
     },
 
     default_status = function () {
-      status <- list(progress = list(0),
-                     max = 10)
-      attr (status, "jobstatus_filename") <- private$write_file
-      attr (status, "job_terminated") <- FALSE
+      status <- list(
+        filename = private$write_file,
+        terminated = FALSE,
+        progress = 0,
+        max = 10
+      )
       status
     },
 
@@ -59,12 +62,13 @@ jobstatus_node <- R6::R6Class(
     write_status = function () {
 
       if (private$has_parent()) {
-        # <to do>
-        attr (self$status, "jobstatus_filename") <- private$write_file
-        attr (self$status, "job_terminated") <- private$terminated
-
         f <- file(private$write_file, open = "w")
-        x <- serialize(self$status, f)
+        x <- serialize(list(
+          filename = private$write_file,
+          terminated = private$terminated,
+          progress = self$status$progress,
+          max = self$status$max
+        ), f)
         close (f)
 
       }
@@ -97,10 +101,10 @@ jobstatus_node <- R6::R6Class(
           }
         })
 
-      prog <- list(progress = vals)
+      prog <- list(vals)
 
-      private$status_changed = !identical (vals, self$status$progress)
-      self$status$progress <- prog
+      private$status_changed = !identical (prog, self$status)
+      self$status <- prog
 
       # if (private$has_parent()) {
       #   f <- file(private$write_file, open = "w")
