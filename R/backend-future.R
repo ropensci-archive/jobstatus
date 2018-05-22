@@ -14,8 +14,29 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_VARNAME)
   packages <- unique(c(packages, "jobstatus"))
 
-  future::future(expr, envir = envir, substitute = FALSE, globals = globals,
+  f <- future::future(expr, envir = envir, substitute = FALSE, globals = globals,
     packages = packages, lazy = lazy, seed = seed, evaluator = evaluator, ...)
+
+  class(f) <- c("Subjob.Future", class(f))
+  f
+}
+
+pump_events <- function() {
+  # TODO
+}
+
+#' @export
+resolved.Subjob.Future <- function(x, timeout = 0.2, ...) {
+  pump_events()
+  NextMethod()
+}
+
+#' @export
+result.Subjob.Future <- function(future, ...) {
+  while (!resolved(future, timeout = 0)) {
+    Sys.sleep(0.1)
+  }
+  NextMethod()
 }
 
 enhance_globals <- function(expr, envir, globals, packages, extra_globals) {
