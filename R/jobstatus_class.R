@@ -1,3 +1,8 @@
+# Cheap hash name generator
+rhash <- function(n = 20) {
+    paste (c ("jst", sample(c (LETTERS, letters, 0:9), n, TRUE)), collapse = "")
+}
+
 # R6 class for storing and transferring job status information
 
 #' @importFrom R6 R6Class
@@ -28,9 +33,11 @@ status <- R6::R6Class(
 
     # generate a file for passing status information
     generate_filename = function (...) {
-      tempfile(...)
+        #file.path(file_dir, rhash ()) 3 TODO: add file_dir to class
+        rhash()
     },
 
+    status_changed = FALSE
     fire_status_changed = function() {
       # TODO: Fire event handlers in the order they were added
       for (name in ls(private$callbacks_status_changed)) {
@@ -64,13 +71,15 @@ status <- R6::R6Class(
     # read the status information from children
     read_status = function () {
 
-      self$status$value <- sum (unlist (lapply (private$read_files,
-                                                function (i) {
-                                                  f <- file (i, open = "r")
-                                                  ret <- unserialize (f)$status$value
-                                                  close (f)
-                                                  return (ret)
-                                                })))
+      vals <- lapply (private$read_files,
+                      function (i) {
+                          f <- file (i, open = "r")
+                          ret <- unserialize (f)$status$progress
+                          close (f)
+                          return (ret)
+                                            })
+      private$status_changed = !identical (vals, self$status$progress)
+      private$status$progress <- vals
 
       f <- file(private$write_file, open = "w")
       x <- serialize(private, f)
@@ -116,7 +125,7 @@ status <- R6::R6Class(
 
     # (if this is a terminal jobstatus object) set the current status and write
     # it
-    set_status = function (value, ...) {
+    set_status = function (progress, ...) {
 
       if (private$has_children()) {
         stop ("cannot set the status as there are sub-jobs",
@@ -125,7 +134,7 @@ status <- R6::R6Class(
 
       # TODO: Handle ... arguments
 
-      new_status <- list(value = value)
+      new_status <- list(progress = progress)
 
       # <update the status info>
       private$check_status(new_status, terminal = TRUE)
@@ -147,8 +156,8 @@ status <- R6::R6Class(
       self$status <- new_status
       private$write_status()
 
-      # TODO: Only fire status changed if actually changed
-      private$fire_status_changed()
+      if (private$status_changed)
+        private$fire_status_changed()
 
     },
 
