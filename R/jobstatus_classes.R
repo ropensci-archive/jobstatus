@@ -52,7 +52,6 @@ jobstatus_node <- R6::R6Class(
 
       if (private$has_parent()) {
         # <to do>
-
         attr (self$status, "jobstatus_filename") <- private$write_file
         attr (self$status, "job_terminated") <- private$terminated
 
@@ -68,12 +67,14 @@ jobstatus_node <- R6::R6Class(
     read_status = function () {
 
       vals <- lapply(private$read_files,
-        function (i) {
+        function (filename) {
           sleep_times <- c(0.01, 0.1, 0.2)
           # Try this up to 3 times
           for (i in seq_len(length(sleep_times) + 1L)) {
             tryCatch({
-              f <- file (i, open = "r")
+              if (!file.exists(filename))
+                return(list())
+              f <- file (filename, open = "r")
               ret <- unserialize (f)$status$progress
               close (f)
               return (ret)
@@ -91,13 +92,15 @@ jobstatus_node <- R6::R6Class(
       prog <- list(progress = vals)
 
       private$status_changed = !identical (vals, self$status$progress)
-      private$status$progress <- prog
+      self$status$progress <- prog
 
-      f <- file(private$write_file, open = "w")
-      x <- serialize(private, f)
-      close (f)
-      x
+      if (private$has_parent()) {
+        f <- file(private$write_file, open = "w")
+        x <- serialize(private, f)
+        close (f)
+      }
 
+      invisible()
     },
 
     # validation of status inputs.
@@ -140,7 +143,6 @@ jobstatus_node <- R6::R6Class(
       } else {
         private$write_file <- super_job$create_sub_jobstatus()
       }
-
     },
 
     on_status_changed = function(callback) {
@@ -179,12 +181,11 @@ intermediate_jobstatus_node <- R6::R6Class(
                                     attr,
                                     "job_terminated",
                                     FUN.VALUE = FALSE)
-      if (all(childrenterminated)) {
+      if (all(children_terminated)) {
         private$terminated <- TRUE
       }
 
-      status
-
+      invisible()
     }
 
   ),
