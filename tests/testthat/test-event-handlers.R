@@ -6,6 +6,13 @@ describe("jobstatus", {
     file <- file.path(tempdir(), "Hello")
     .GlobalEnv[[JOBSTATUS_FILE_NAME]] <- file
 
+    fake_status <- function (...) {
+      status <- list(...)
+      attr(status, "jobstatus_filename") <- file
+      attr(status, "job_terminated") <- FALSE
+      status
+    }
+
     job <- terminal_jobstatus_node$new()
 
     value <- job$status
@@ -20,8 +27,7 @@ describe("jobstatus", {
 
     job$set_status(10)
 
-    expected <- list(progress = 10)
-    attr(expected, "jobstatus_filename") <- file
+    expected <- fake_status(progress = 10)
 
     expect_identical(value, expected)
     expect_identical(times_called, 1L)
@@ -32,9 +38,7 @@ describe("jobstatus", {
     })
 
     job$set_status(20)
-    expected <- list(progress = 20)
-    attr(expected, "jobstatus_filename") <- file
-
+    expected <- fake_status(progress = 20)
 
     expect_identical(value, expected)
     expect_identical(times_called, 2L)
