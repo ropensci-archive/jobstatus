@@ -140,7 +140,7 @@ jobstatus_node <- R6::R6Class(
 
     # a print method for this object
     print = function () {
-      print("a jobstatus object with current status:")
+      cat("a jobstatus object with current status:")
       print(self$status)
     }
 
@@ -187,7 +187,6 @@ intermediate_jobstatus_node <- R6::R6Class(
   )
 )
 
-#' @export
 terminal_jobstatus_node <- R6::R6Class(
 
   classname = "terminal_jobstatus_node",
@@ -253,3 +252,11 @@ terminal_jobstatus_node <- R6::R6Class(
 
   )
 )
+
+#' jobstatus
+#'
+#' create a job status node to record progress on a task
+#'
+#' @export
+#'
+jobstatus <- terminal_jobstatus_node

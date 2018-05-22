@@ -2,6 +2,14 @@
 # handle accumulation and passing of jobstatus information whilst executing code
 # in an intermediate or top-level (ie. non-terminal) job. Apply a display
 # callback to enable visualisation of progress and status information.
+
+
+#' with_jobstatus
+#'
+#' run an expression with some jobs, transmitting and possibly displaying status information
+#' from jobstatus objects in the jobs
+#'
+#' @export
 with_jobstatus <- function (expr, display = jobstatus_bar()) {
 
   if (exists(JOBSTATUS_NODE_NAME)) {
