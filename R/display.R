@@ -19,6 +19,30 @@ clear_progress_display <- function(x) {
   UseMethod("clear_progress_display")
 }
 
+#' @export
+percentage <- list()
+class(percentage) <- "percentage"
+
+#' @export
+update_progress_display.percentage <- function(x, status) {
+  progress <- unlist(status$progress)
+  max <- unlist(status$max)
+  percentages <- round(100 * progress / max)
+  overall <- calculate_ratio(status)
+
+  job_progress <- sprintf("job %i: %s%%",
+                          seq_along(percentages),
+                          percentages)
+  msg <- sprintf("\r  total: %s%%\t%s",
+                 round(100 * overall),
+                 paste(job_progress, collapse = "   "))
+  cat(msg)
+}
+
+#' @export
+clear_progress_display.percentage <- function(x) {
+  flush.console()
+}
 
 # progress_bar implementation =======================
 
