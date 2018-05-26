@@ -22,18 +22,16 @@ with_jobstatus <- function (expr, display = NULL) {
 
   # temporarily put the jobstatus in the global environment, to be
   # used by subjob future
-  old_js <- .GlobalEnv[[JOBSTATUS_NODE_NAME]]
   .GlobalEnv[[JOBSTATUS_NODE_NAME]] <- js
-  on.exit(.GlobalEnv[[JOBSTATUS_NODE_NAME]] <- old_js, add = TRUE)
+  on.exit(.GlobalEnv[[JOBSTATUS_NODE_NAME]] <- NULL, add = TRUE)
 
-  if (!is.null(display) && is.null(old_js)) {
+  if (!is.null(display)) {  # } && is.null(old_js)) {
     on.exit(clear_progress_display(display))
     # register the display callback with it
 
     # possibly suppress this when deeper in the stack, by only executing if the
     # node has no parents (in ons_status_changed)
     js$on_status_changed(function(status) {
-      message("on_status_changed called")
       update_progress_display(display, status)
     })
   }

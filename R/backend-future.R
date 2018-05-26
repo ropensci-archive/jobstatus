@@ -1,13 +1,6 @@
 # a jobstatus_node object that might be assigned to the global environment, and
-# rperesents the current job
+# represents the current job
 JOBSTATUS_NODE_NAME <- ".current_jobstatus_node"
-
-# filepath that might be assigned to the global environment saying where the
-# current jobstatus node should write status information to
-JOBSTATUS_FILE_NAME <- ".current_jobstatus_file"
-
-# make subjobfuture pass the new filename instead
-
 
 #' subjob_future
 #'
@@ -25,22 +18,17 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
 
   expr <- substitute(expr)
 
-  # on.exit with global environment
   js <- get_current_job()
   if (is.null(js)) {
-    stop("Can't call subjob_future from outside of a with_jobstatus block")
+    stop ("Can't call subjob_future from outside of a with_jobstatus block")
   }
+
+  # set whether we're runnning in sequence at the moment, to tell our shildren
+  js$sequential <- inherits(future::plan(), "sequential")
+
   subjob_file_name <- js$create_sub_jobstatus()
 
-  # to pass the file name on to the subjob, temporarily set the current file to
-  # be this subjob's one
-  assign(JOBSTATUS_FILE_NAME, subjob_file_name, envir = .GlobalEnv)
-  on.exit({
-    if (exists(JOBSTATUS_FILE_NAME, .GlobalEnv))
-      rm(list = JOBSTATUS_FILE_NAME, pos = .GlobalEnv)
-  }, add = TRUE)
-
-  globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_FILE_NAME)
+  globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_NODE_NAME)
   packages <- unique(c(packages, "jobstatus"))
 
   f <- future::future(expr, envir = envir, substitute = FALSE, globals = globals,

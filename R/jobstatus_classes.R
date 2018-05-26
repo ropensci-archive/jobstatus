@@ -11,6 +11,8 @@ jobstatus_node <- R6::R6Class(
 
     nextCallbackId = 1L,
 
+    parent = NULL,
+
     terminated = FALSE,
 
     # the file to write progress information to when sending status information
@@ -22,22 +24,38 @@ jobstatus_node <- R6::R6Class(
 
     # generate a file for passing status information
     generate_filename = function (...) {
-      if (!is.null(.GlobalEnv[[JOBSTATUS_FILE_NAME]])) {
-        file.path(dirname(.GlobalEnv[[JOBSTATUS_FILE_NAME]]), rhash())
-      } else {
-        file.path(getOption("jobstatus.basedir", tempdir()), rhash())
-      }
+      file.path(getOption("jobstatus.basedir", tempdir()), rhash())
     },
 
     status_changed = FALSE,
 
     fire_status_changed = function() {
-      # TODO: Fire event handlers in the order they were added
-      flipped_status <- invert(self$status)
-      for (name in ls(private$callbacks_status_changed)) {
-        # TODO: Error handling, maybe
-        private$callbacks_status_changed[[name]](flipped_status)
+
+      # look for a parent
+      parent <- private$parent
+
+      # if we're at the top of the stack, it's up to us to display
+      if (is.null(parent)) {
+
+        # TODO: Fire event handlers in the order they were added
+        for (name in ls(private$callbacks_status_changed)) {
+          # TODO: Error handling, maybe
+          private$callbacks_status_changed[[name]](self$status)
+        }
+
+      } else {
+
+        # if we have a parent and they told us we are running in sequence, we should trigger the
+        # parent to fire from higher up the stack
+        if (parent$sequential) {
+          parent$fetch_status()
+        }
+
+        # if we're not running in sequence, we can't display anything and we're
+        # not holding anyone up, so move on
+
       }
+
     },
 
     has_children = function () {
@@ -48,70 +66,57 @@ jobstatus_node <- R6::R6Class(
       !is.null(private$write_file)
     },
 
-    default_status = function () {
-      status <- list(
-        filename = private$write_file,
-        terminated = FALSE,
-        progress = 0,
-        max = 10
-      )
-      status
-    },
-
     # write the status to file IFF there is a parent jobstatus object
     write_status = function () {
 
       if (private$has_parent()) {
-        f <- file(private$write_file, open = "w")
-        x <- serialize(list(
-          filename = private$write_file,
-          terminated = private$terminated,
-          progress = self$status$progress,
-          max = self$status$max
-        ), f)
-        close (f)
+        write(private$write_file,
+              list(filename = private$write_file,
+                   terminated = private$terminated,
+                   progress = self$status$progress,
+                   max = self$status$max)
+              )
 
       }
 
     },
 
-    # read the status information from children
+    # read the status information from children, with delays in case of blocking
     read_status = function () {
 
-      vals <- lapply(private$read_files,
-        function (filename) {
-          sleep_times <- c(0.01, 0.1, 0.2)
-          # Try this up to 3 times
-          for (i in seq_len(length(sleep_times) + 1L)) {
-            tryCatch({
-              if (!file.exists(filename))
-                return (private$default_status())
-              f <- file (filename, open = "r")
-              ret <- unserialize (f)$status
-              close (f)
-              return (ret)
-            }, error = function(e) {
-              if (i <= length(sleep_times)) {
-                Sys.sleep(sleep_times[[i]])
-              } else {
-                # Give up
-                stop(e)
-              }
-            })
-          }
-        })
+      read_filename <- function (filename) {
 
-      prog <- list(vals)
+        sleep_times <- c(0.01, 0.1, 0.2)
 
-      private$status_changed = !identical (prog, self$status)
-      self$status <- prog
+        # Try this up to 3 times
+        for (i in seq_len(length(sleep_times) + 1L)) {
+          tryCatch({
 
-      # if (private$has_parent()) {
-      #   f <- file(private$write_file, open = "w")
-      #   x <- serialize(private, f)
-      #   close (f)
-      # }
+            # if (!file.exists(filename)) {
+            #   return (private$default_status())
+            # }
 
+            status <- read(filename)
+            return (status)
+
+          },
+
+          error = function(e) {
+            # on error, try waiting
+            if (i <= length(sleep_times)) {
+              Sys.sleep(sleep_times[[i]])
+            } else {
+              # Give up
+              stop(e)
+            }
+          })
+        }
+      }
+
+      status_list <- lapply(private$read_files, read_filename)
+      new_status <- invert(status_list)
+      private$status_changed <- !identical (new_status, self$status)
+      self$status <- new_status
       invisible()
     },
 
@@ -133,9 +138,7 @@ jobstatus_node <- R6::R6Class(
   public = list(
 
     # the status of this job
-    status = structure(list(),
-                       job_terminated = FALSE,
-                       jobstatus_filename = ""),
+    status = NULL,
 
     # the initialisation function (called with jobstatus$new()) which takes at
     # minimum the maximum number of iterations of the job (if a terminal
@@ -144,17 +147,13 @@ jobstatus_node <- R6::R6Class(
     # automagically detect a parent jobstatus object, so that isn't necessary.
     initialize = function (super_job = get_current_job()) {
 
-      # record where to write the status information
-      if (is.character(super_job)) {
-        # This is a special case for when with_jobstatus is called inside
-        # a new subjob_future; we know exactly what file we want to write
-        # to.
-        private$write_file <- super_job
-      } else if (is.null(super_job)) {
-        private$write_file <- NULL
-      } else {
-        private$write_file <- super_job$create_sub_jobstatus()
+      private$parent <- super_job
+      if (!is.null(super_job)) {
+        private$write_file <- super_job$latest_read_file()
       }
+
+      self$status <- empty_status()
+
     },
 
     on_status_changed = function(callback) {
@@ -205,6 +204,9 @@ intermediate_jobstatus_node <- R6::R6Class(
   ),
 
   public = list(
+
+    sequential = NULL,
+
     initialize = function(super_job = get_current_job()) {
       super$initialize(super_job = super_job)
     },
@@ -214,6 +216,10 @@ intermediate_jobstatus_node <- R6::R6Class(
 
       filename <- private$generate_filename()
       private$read_files <- c(private$read_files, filename)
+
+      # just create it now, so we don't have to worry about waiting for it to be created
+      # the empty list means progress bars can identify this as having 0 progress so far
+      write(filename, empty_status(filename))
       filename
 
     },
@@ -234,6 +240,14 @@ intermediate_jobstatus_node <- R6::R6Class(
       if (private$status_changed)
         private$fire_status_changed()
 
+    },
+
+    latest_read_file = function () {
+      n_files <- length(private$read_files)
+      if (n_files < 1) {
+        stop ("no files have been assigned. what's going on?")
+      }
+      private$read_files[[n_files]]
     }
 
   )
@@ -244,6 +258,10 @@ terminal_jobstatus_node <- R6::R6Class(
   classname = "terminal_jobstatus_node",
 
   inherit = jobstatus_node,
+
+  private = list(
+    sequential = NULL
+  ),
 
   public = list(
 
@@ -259,8 +277,12 @@ terminal_jobstatus_node <- R6::R6Class(
                            super_job = get_current_job()) {
 
       super$initialize(super_job)
+
+      # record whether we were running in sequence at the time of construction
+      private$sequential <- private$parent$sequential
+
       self$maximum_progress <- maximum_progress
-      status <- private$default_status()
+      status <- empty_status(private$write_file)
       status$max <- maximum_progress
 
       other_args <- list(...)
@@ -284,7 +306,7 @@ terminal_jobstatus_node <- R6::R6Class(
       # Merge old status and new args
       new_status <- self$status
       if (!missing(progress))
-        new_status$progress <- list(progress)
+        new_status$progress <- progress
       other_args <- list(...)
 
       names <- names(other_args)
