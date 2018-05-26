@@ -4,20 +4,12 @@
 # make it current.
 get_current_job <- function () {
   if (exists(JOBSTATUS_NODE_NAME, .GlobalEnv)) {
-    return(.GlobalEnv[[JOBSTATUS_NODE_NAME]])
+    current_job <- .GlobalEnv[[JOBSTATUS_NODE_NAME]]
   } else {
-    return(NULL)
+    current_job <- NULL
   }
+  current_job
 }
-
-# if (exists(JOBSTATUS_FILE_NAME, .GlobalEnv)){
-#   filename <- .GlobalEnv[[JOBSTATUS_FILE_NAME]]
-#   rm(list = JOBSTATUS_FILE_NAME, .GlobalEnv)
-#   node <- intermediate_jobstatus_node$new(super_job = filename)
-#   .GlobalEnv[[JOBSTATUS_NODE_NAME]] <- node
-#   return(node)
-# } else
-
 
 with_current_job <- function(jobstatus, expr) {
   # old <- .GlobalEnv[[JOBSTATUS_NODE_NAME]]

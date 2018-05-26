@@ -3,18 +3,24 @@
 \name{subjob_future}
 \alias{subjob_future}
 \alias{resolved.Subjob.Future}
-\alias{result.Subjob.Future}
+\alias{value.Subjob.Future}
 \title{subjob_future}
 \usage{
 subjob_future(expr, envir = parent.frame(), substitute = TRUE,
-  globals = TRUE, packages = NULL, lazy = FALSE, seed = NULL,
-  evaluator = plan("next"), ...)
+  globals = TRUE, packages = NULL, lazy = inherits(future::plan(),
+  "sequential"), seed = NULL, evaluator = plan("next"), ...)
 
 resolved.Subjob.Future(x, timeout = 0.2, ...)
 
-result.Subjob.Future(future, ...)
+value.Subjob.Future(future, ...)
 }
 \description{
 a drop-in replacement for \code{\link[future:future]{future::future}} that passes on job status
-information
+information.
+}
+\details{
+Unlike \code{future}, \code{subjob_future} uses \code{lazy = TRUE}
+  by default when a sequential plan is in operation, since this is required
+  to correctly display multiple parallale progress bars with a sequential
+  plan.
 }

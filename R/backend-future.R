@@ -5,11 +5,16 @@ JOBSTATUS_NODE_NAME <- ".current_jobstatus_node"
 #' subjob_future
 #'
 #' a drop-in replacement for \code{\link[future:future]{future::future}} that passes on job status
-#' information
+#' information.
+#'
+#' @details Unlike \code{future}, \code{subjob_future} uses \code{lazy = TRUE}
+#'   by default when a sequential plan is in operation, since this is required
+#'   to correctly display multiple parallale progress bars with a sequential
+#'   plan.
 #'
 #' @export
 subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
-  globals = TRUE, packages = NULL, lazy = FALSE, seed = NULL,
+  globals = TRUE, packages = NULL, lazy = inherits(future::plan(), "sequential"), seed = NULL,
   evaluator = plan("next"), ...) {
 
   if (!exists(JOBSTATUS_NODE_NAME, .GlobalEnv)) {
@@ -26,6 +31,7 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   # set whether we're runnning in sequence at the moment, to tell our shildren
   js$sequential <- inherits(future::plan(), "sequential")
 
+  # set up a reporting file for that child
   js$create_sub_jobstatus()
 
   globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_NODE_NAME)
@@ -52,7 +58,7 @@ resolved.Subjob.Future <- function(x, timeout = 0.2, ...) {
 
 #' @export
 #' @rdname subjob_future
-result.Subjob.Future <- function(future, ...) {
+value.Subjob.Future <- function(future, ...) {
   while (!resolved(future, timeout = 0)) {
     Sys.sleep(0.1)
   }
