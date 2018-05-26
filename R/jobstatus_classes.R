@@ -148,8 +148,10 @@ jobstatus_node <- R6::R6Class(
     initialize = function (super_job = get_current_job()) {
 
       private$parent <- super_job
+
+      # get a communitcation file from the parent
       if (!is.null(super_job)) {
-        private$write_file <- super_job$latest_read_file()
+        private$write_file <- super_job$give_read_file()
       }
 
       self$status <- empty_status()
@@ -199,13 +201,15 @@ intermediate_jobstatus_node <- R6::R6Class(
       }
 
       invisible()
-    }
+    },
+
+    next_file = 1
 
   ),
 
   public = list(
 
-    sequential = NULL,
+    sequential = TRUE,
 
     initialize = function(super_job = get_current_job()) {
       super$initialize(super_job = super_job)
@@ -222,6 +226,10 @@ intermediate_jobstatus_node <- R6::R6Class(
       write(filename, empty_status(filename))
       filename
 
+    },
+
+    child_number = function () {
+      length(private$read_files)
     },
 
     # fetch status information from the children
@@ -242,14 +250,21 @@ intermediate_jobstatus_node <- R6::R6Class(
 
     },
 
-    latest_read_file = function () {
-      n_files <- length(private$read_files)
-      if (n_files > 0) {
-        ans <- private$read_files[[n_files]]
+    # pull out one of the read files
+    give_read_file = function () {
+
+      files <- private$read_files
+
+      if (self$sequential) {
+        # if running sequentially use the counter method
+        file <- files[[private$next_file]]
+        private$next_file <- private$next_file + 1
       } else {
-        ans <- NULL
+        # if in parallel, use the last file created
+        file <- files[[length(files)]]
       }
-      ans
+
+      file
     }
 
   )
@@ -279,7 +294,7 @@ terminal_jobstatus_node <- R6::R6Class(
                            super_job = get_current_job()) {
 
       # if jobstatus hasn't created a file, we can ignore it
-      if (is.null(super_job$latest_read_file))
+      if (super_job$child_number() == 0)
         super_job <- NULL
 
       super$initialize(super_job)

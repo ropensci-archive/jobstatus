@@ -36,7 +36,7 @@ A `jobstatus` set up might look something like this:
 library (jobstatus)
 
 # a function to run a single task
-some_big_task <- function (iterations = 10) {
+some_big_task <- function (iterations = 100) {
   
   # create a jobstatus object to track progress
   # do the work, incrementing the progress counter each time
@@ -44,8 +44,8 @@ some_big_task <- function (iterations = 10) {
   
   result <- 0
   for (i in seq_len(iterations)) {
-    result <- result + rnorm(1)
-    Sys.sleep(iterations * 0.1)
+    result <- result + 1
+    Sys.sleep(runif(1, 0, 0.1))
     status$tick()
   }
   
@@ -64,15 +64,18 @@ plan(sequential)
 with_jobstatus({
   
   # create some futures (possibly in parallel)
-  f1 <- subjob_future(some_big_task(10))
-  f2 <- subjob_future(some_big_task(5))
+  f1 <- subjob_future(some_big_task(100))
+  f2 <- subjob_future(some_big_task(100))
+  f3 <- subjob_future(some_big_task(50))
+  f4 <- subjob_future(some_big_task(50))
   
   # get their values
   v1 <- value(f1)
   v2 <- value(f2)
+  v3 <- value(f3)
+  v4 <- value(f4)
   
-})
-
+}, display = percentage)
 ```
 <!-- ![](parallel_progress_gif) -->
 
