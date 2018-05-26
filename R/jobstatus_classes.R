@@ -244,10 +244,12 @@ intermediate_jobstatus_node <- R6::R6Class(
 
     latest_read_file = function () {
       n_files <- length(private$read_files)
-      if (n_files < 1) {
-        stop ("no files have been assigned. what's going on?")
+      if (n_files > 0) {
+        ans <- private$read_files[[n_files]]
+      } else {
+        ans <- NULL
       }
-      private$read_files[[n_files]]
+      ans
     }
 
   )
@@ -275,6 +277,10 @@ terminal_jobstatus_node <- R6::R6Class(
     initialize = function (maximum_progress = 100L,
                            ...,
                            super_job = get_current_job()) {
+
+      # if jobstatus hasn't created a file, we can ignore it
+      if (is.null(super_job$latest_read_file))
+        super_job <- NULL
 
       super$initialize(super_job)
 

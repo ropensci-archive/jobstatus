@@ -26,7 +26,7 @@ subjob_future <- function(expr, envir = parent.frame(), substitute = TRUE,
   # set whether we're runnning in sequence at the moment, to tell our shildren
   js$sequential <- inherits(future::plan(), "sequential")
 
-  subjob_file_name <- js$create_sub_jobstatus()
+  js$create_sub_jobstatus()
 
   globals <- enhance_globals(expr, envir, globals, packages, JOBSTATUS_NODE_NAME)
   packages <- unique(c(packages, "jobstatus"))

@@ -7,7 +7,7 @@ describe("subjob_future", {
   it("passes subjob context variable along", {
 
     test <- function(globals) {
-      x <- value(subjob_future(get(jobstatus:::JOBSTATUS_FILE_NAME, globalenv()), globals = globals))
+      x <- value(subjob_future(get(jobstatus:::JOBSTATUS_NODE_NAME, globalenv()), globals = globals))
       expect_true(!is.null(x))
     }
     with_jobstatus({
@@ -23,7 +23,7 @@ describe("regular future", {
   it("doesn't pass subjob context variable along", {
 
     expect_error(
-      value(future(get(jobstatus:::JOBSTATUS_FILE_NAME))),
+      value(future(get(jobstatus:::JOBSTATUS_NODE_NAME))),
       "not found"
     )
   })
