@@ -6,14 +6,14 @@ rhash <- function(n = 20) {
 write <- function (filename, ...) {
   f <- file(filename, open = "w")
   x <- serialize(..., f)
-  close(f)
+  on.exit(close(f))
   invisible()
 }
 
 read <- function (filename, ...) {
   f <- file(filename, open = "r")
   ans <- unserialize(f)
-  close(f)
+  on.exit(close(f))
   ans
 }
 

@@ -4,9 +4,9 @@ list(
 )
 
 calculate_ratio <- function(status) {
-  num <- sum(unlist(status$progress))
-  denom <- sum(unlist(status$max))
-  num / denom
+  num <- unlist(status$progress)
+  denom <- unlist(status$max)
+  mean(num / denom)
 }
 
 #' @export
@@ -18,6 +18,8 @@ update_progress_display <- function(x, status) {
 clear_progress_display <- function(x) {
   UseMethod("clear_progress_display")
 }
+
+# percentage implementation =======================
 
 #' @export
 percentage <- list()
@@ -33,7 +35,7 @@ update_progress_display.percentage <- function(x, status) {
   job_progress <- sprintf("job %i: %s%%",
                           seq_along(percentages),
                           percentages)
-  msg <- sprintf("\r  total: %s%%\t%s",
+  msg <- sprintf("\r  total: %s%%\t\t%s",
                  round(100 * overall),
                  paste(job_progress, collapse = "   "))
   cat(msg)

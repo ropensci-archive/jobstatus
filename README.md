@@ -1,27 +1,42 @@
 
-[![Travis build status](https://travis-ci.org/ropenscilabs/jobstatus.svg?branch=master)](https://travis-ci.org/ropenscilabs/jobstatus) [![Coverage status](https://codecov.io/gh/ropenscilabs/jobstatus/branch/master/graph/badge.svg)](https://codecov.io/github/ropenscilabs/jobstatus?branch=master) [![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Travis build
+status](https://travis-ci.org/ropenscilabs/jobstatus.svg?branch=master)](https://travis-ci.org/ropenscilabs/jobstatus)
+[![Coverage
+status](https://codecov.io/gh/ropenscilabs/jobstatus/branch/master/graph/badge.svg)](https://codecov.io/github/ropenscilabs/jobstatus?branch=master)
+[![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-jobstatus
-=========
 
-`jobstatus` lets you pass live progress, status, and other information between functions and processes in R, so that you can keep an eye on how complex and long-running jobs are progressing. `jobstatus` uses the [`future` package](https://cran.r-project.org/package=future) so you can even get live progress information back from jobs running in parallel.
+# jobstatus
 
-How it works
-------------
+`jobstatus` lets you pass live progress, status, and other information
+between functions and processes in R, so that you can keep an eye on how
+complex and long-running jobs are progressing. `jobstatus` uses the
+[`future` package](https://cran.r-project.org/package=future) so you can
+even get live progress information back from jobs running in parallel.
 
-`jobstatus` passes status information between functions and processes in R so you can monitor what's happening and how much progress the code has made. There are three main functions in `jobstatus`:
+## How it works
 
--   `jobstatus` creates a jobstatus object, which lets you record your progress on a single task
--   `with_jobstatus` runs a chunk of code that runs other jobs, and keeps track of the status information
--   `subjob_future` is a wrapper function for `future::future` that lets you write code that can be executed either in sequence or in parallel.
+`jobstatus` passes status information between functions and processes in
+R so you can monitor what’s happening and how much progress the code has
+made. There are three main functions in `jobstatus`:
 
-`with_jobstatus` can also be used to display the progress information, for example with a progress bar.
+  - `jobstatus` creates a jobstatus object, which lets you record your
+    progress on a single task
+  - `with_jobstatus` runs a chunk of code that runs other jobs, and
+    keeps track of the status information
+  - `subjob_future` is a wrapper function for `future::future` that lets
+    you write code that can be executed either in sequence or in
+    parallel.
+
+`with_jobstatus` can also be used to display the progress information,
+for example with a progress bar.
 
 A `jobstatus` set up might look something like this:
 
 ``` r
 library (jobstatus)
+library (progress)
 
 # a function to run a single task
 some_big_task <- function (iterations = 100) {
@@ -33,7 +48,7 @@ some_big_task <- function (iterations = 100) {
   result <- 0
   for (i in seq_len(iterations)) {
     result <- result + 1
-    Sys.sleep(runif(1, 0, 0.1))
+    Sys.sleep(runif(1, 0, 0.2))
     status$tick()
   }
   
@@ -46,16 +61,16 @@ some_big_task <- function (iterations = 100) {
 
 # load the future package and set it to run the jobs in parallel
 library (future)
-plan(sequential)
+plan(multiprocess)
 
 # dispatch some jobs, tracking their status information and displaying multiple progress bars
 with_jobstatus({
   
   # create some futures (possibly in parallel)
-  f1 <- subjob_future(some_big_task(100))
-  f2 <- subjob_future(some_big_task(100))
-  f3 <- subjob_future(some_big_task(50))
-  f4 <- subjob_future(some_big_task(50))
+  f1 <- subjob_future(some_big_task())
+  f2 <- subjob_future(some_big_task())
+  f3 <- subjob_future(some_big_task())
+  f4 <- subjob_future(some_big_task())
   
   # get their values
   v1 <- value(f1)
@@ -66,18 +81,26 @@ with_jobstatus({
 }, display = percentage)
 ```
 
-<!-- ![](parallel_progress_gif) -->
-Extensions
-----------
+![](figs/percentage_progress.gif)
 
-This is very much a work in progress and the current implementation is quite limited (and probably quite buggy). Ideally, we'd like it to support various different parallel backends and interfaces, handle other types of job status information, and provide different types of progress bars and displays.
+## Extensions
 
-This prototype was developed over two days at the [2018 rOpenSci unconference](http://unconf18.ropensci.org/) and the maintainers won't have much time to extend and improve the package. We'd love to have help, so if you're keen please let us know in [the issues tracker](https://github.com/ropenscilabs/jobstatus/issues)!
+This is very much a work in progress and the current implementation is
+quite limited (and probably quite buggy). Ideally, we’d like it to
+support various different parallel backends and interfaces, handle other
+types of job status information, and provide different types of progress
+bars and displays.
 
-Installation
-------------
+This prototype was developed over two days at the [2018 rOpenSci
+unconference](http://unconf18.ropensci.org/) and the maintainers won’t
+have much time to extend and improve the package. We’d love to have
+help, so if you’re keen please let us know in [the issues
+tracker](https://github.com/ropenscilabs/jobstatus/issues)\!
 
-You can install the development version from [GitHub](https://github.com/) with:
+## Installation
+
+You can install the development version from
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
