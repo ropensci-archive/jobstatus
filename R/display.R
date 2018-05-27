@@ -48,11 +48,6 @@ clear_progress_display.percentage <- function(x) {
 
 # progress_bar implementation =======================
 
-# no total for now, just the component jobs
-
-# just use the progress bar from the progress package; but ignore total
-progress_bar <- progress::progress_bar
-
 #' @export
 update_progress_display.progress_bar <- function(x, status) {
 
