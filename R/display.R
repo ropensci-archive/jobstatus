@@ -103,7 +103,7 @@ rstudio_progress <- R6Class(
 update_progress_display.rstudio_progress <- function(x, status) {
   rollup <- function(x) { sum(unlist(x)) }
 
-  ids <- names(status$progress)
+  ids <- seq_along(status$progress)
   prog <- vapply(status$progress, rollup, numeric(1))
   max <- vapply(status$max, rollup, numeric(1))
   df <- data.frame(
