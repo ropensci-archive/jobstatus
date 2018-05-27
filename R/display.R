@@ -48,14 +48,79 @@ clear_progress_display.percentage <- function(x) {
 
 # progress_bar implementation =======================
 
+# no total for now, just the component jobs
+
+# just use the progress bar from the progress package; but ignore total
+progress_bar <- progress::progress_bar
+
 #' @export
 update_progress_display.progress_bar <- function(x, status) {
-  x$update(calculate_ratio(status))
+
+  # given a tempalte progress bar x, and a status object, create a smaller progress bar for each job
+
+  x_private <- x$.__enclos_env__$private
+
+  # get progress statistics
+  progress <- unlist(status$progress)
+  max <- unlist(status$max)
+  fractions <- progress / max
+
+  # work out the individual bar width from the overall width in x
+  total_width <-   terminal_width <- options()$width
+  n_bars <- length(status$progress)
+  # total_width <- total_width - (n_bars - 1)
+  bar_width <- total_width %/% n_bars - 2
+  x_private$width <- bar_width
+
+  # fix some things to stabilise the plotting
+  x_private$total <- 100
+  x_private$clear = FALSE
+  x_private$show_after = 0
+
+  # output text
+  f <- tempfile()
+  file.create(f)
+  con <- file(f, "r+")
+  x_private$stream <- con
+  on.exit(close(con))
+
+  # loop through the bars, getting a string for the status
+
+  capture_bar <- function (fraction) {
+    # never let it close
+    x_private$complete <- FALSE
+    # update the ratio to render
+    x$update(ratio = fraction)
+    line <- suppressWarnings(readLines(con))[2]
+
+    # x$update(0)
+
+    # flush the connection
+    flush.connection(con)
+    if (is.na(line)) {
+      line <- ""
+    }
+    line
+  }
+
+  bar_text <- vapply(fractions, capture_bar, "")
+
+  text <- paste(bar_text, collapse = "    ")
+  cat("\r", text)
+
+  invisible()
+
 }
 
 #' @export
 clear_progress_display.progress_bar <- function(x) {
+
+  flush.console()
+
 }
+
+# rstudio_progress implementation =======================
+
 
 #' @export
 rstudio_progress <- R6Class(
