@@ -3,7 +3,7 @@
 status](https://travis-ci.org/ropenscilabs/jobstatus.svg?branch=master)](https://travis-ci.org/ropenscilabs/jobstatus)
 [![Coverage
 status](https://codecov.io/gh/ropenscilabs/jobstatus/branch/master/graph/badge.svg)](https://codecov.io/github/ropenscilabs/jobstatus?branch=master)
-[![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Project Status: Abandoned – Initial development has started, but there has not yet been a stable, usable release; the project has been abandoned and the author(s) do not intend on continuing development.](https://www.repostatus.org/badges/latest/abandoned.svg)](https://www.repostatus.org/#abandoned)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
